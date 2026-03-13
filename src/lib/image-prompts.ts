@@ -14,10 +14,10 @@ export const STYLE_CONFIG: Record<
     prompt:
       "Transform this portrait into a whimsical hand-painted Ghibli-inspired illustration. Preserve the same person, identity, expression, pose, and clothing silhouette. Soft pastel palette, dreamy atmosphere, painterly anime background treatment, charming and cinematic mood, clean subject edges, print-ready quality, no text, no watermark."
   },
-  anime: {
-    label: "Anime Style",
+  cartoon: {
+    label: "Cartoon Style",
     prompt:
-      "Transform this portrait into a polished modern anime illustration. Preserve the same person, hair, face identity, pose, and outfit structure. Sharp clean line art, expressive eyes, smooth cel shading, vibrant but balanced colors, premium poster quality, centered composition, no text, no watermark."
+      "Transform this photo into a clean, modern cartoon illustration. Preserve the person, pose, clothing, composition, and full framing. Keep the subject fully visible and do not crop the head or body. Smooth outlines, stylized features, vibrant but balanced colors, premium cartoon character style."
   },
   caricature: {
     label: "Caricature Style",
@@ -29,6 +29,6 @@ export const STYLE_CONFIG: Record<
 export const STYLE_ORDER: StyleKey[] = [
   "rockwell",
   "ghibli",
-  "anime",
+  "cartoon",
   "caricature"
 ];

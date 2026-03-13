@@ -10,14 +10,22 @@ export const runtime = "nodejs";
 async function generateOneStyle(file: File, key: keyof typeof STYLE_CONFIG) {
   const style = STYLE_CONFIG[key];
 
-  const response = await openai.images.edit({
-    model: "gpt-image-1.5",
-    image: file,
-    prompt: style.prompt,
-    size: "1024x1024",
-    quality: "high",
-    output_format: "png"
-  });
+ const response = await openai.images.edit({
+  model: "gpt-image-1.5",
+  image: file,
+  prompt: `${style.prompt}
+
+Important composition rules:
+- Preserve the full original photo composition.
+- Do not crop the top of the head.
+- Do not crop the body, outfit, arms, or feet if visible.
+- Keep the subject fully in frame.
+- Maintain the original framing and camera distance as much as possible.
+- Do not zoom in.`,
+  size: "auto",
+  quality: "high",
+  output_format: "png"
+});
 
   const base64 = response.data?.[0]?.b64_json;
 
