@@ -14,10 +14,10 @@ type Props = {
   placement: DesignPlacement;
   textLayer: TextLayer;
   editable?: boolean;
-  onDesignMouseDown?: (e: React.MouseEvent) => void;
-  onDesignResizeMouseDown?: (e: React.MouseEvent) => void;
-  onTextMouseDown?: (e: React.MouseEvent) => void;
-  onTextResizeMouseDown?: (e: React.MouseEvent) => void;
+  onDesignPointerDown?: (e: React.PointerEvent) => void;
+  onDesignResizePointerDown?: (e: React.PointerEvent) => void;
+  onTextPointerDown?: (e: React.PointerEvent) => void;
+  onTextResizePointerDown?: (e: React.PointerEvent) => void;
   containerRef?: React.RefObject<HTMLDivElement | null>;
 };
 
@@ -32,10 +32,10 @@ export default function MockupPreview({
   placement,
   textLayer,
   editable = false,
-  onDesignMouseDown,
-  onDesignResizeMouseDown,
-  onTextMouseDown,
-  onTextResizeMouseDown,
+  onDesignPointerDown,
+  onDesignResizePointerDown,
+  onTextPointerDown,
+  onTextResizePointerDown,
   containerRef
 }: Props) {
   const mockupPath = getMockupPath(color, side);
@@ -52,7 +52,7 @@ export default function MockupPreview({
             top: `${placement.y}%`,
             width: `${placement.width}%`
           }}
-          onMouseDown={editable ? onDesignMouseDown : undefined}
+          onPointerDown={editable ? onDesignPointerDown : undefined}
         >
           <img
             src={designUrl}
@@ -64,7 +64,7 @@ export default function MockupPreview({
           {editable && (
             <div
               className="resize-handle"
-              onMouseDown={onDesignResizeMouseDown}
+              onPointerDown={onDesignResizePointerDown}
             />
           )}
         </div>
@@ -81,14 +81,14 @@ export default function MockupPreview({
             fontSize: `${textLayer.fontSize}px`,
             color: textLayer.color
           }}
-          onMouseDown={editable ? onTextMouseDown : undefined}
+          onPointerDown={editable ? onTextPointerDown : undefined}
         >
           <span>{textLayer.text}</span>
 
           {editable && (
             <div
               className="resize-handle text-resize-handle"
-              onMouseDown={onTextResizeMouseDown}
+              onPointerDown={onTextResizePointerDown}
             />
           )}
         </div>

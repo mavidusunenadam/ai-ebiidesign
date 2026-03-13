@@ -51,26 +51,36 @@ export default function MockupEditor({
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const [dragMode, setDragMode] = useState<DragMode>(null);
-  const [startMouse, setStartMouse] = useState({ x: 0, y: 0 });
+  const [activePointerId, setActivePointerId] = useState<number | null>(null);
+  const [startPointer, setStartPointer] = useState({ x: 0, y: 0 });
   const [startPlacement, setStartPlacement] = useState(placement);
   const [startText, setStartText] = useState(textLayer);
 
-  function beginDrag(e: React.MouseEvent, mode: DragMode) {
+  function beginDrag(e: React.PointerEvent, mode: DragMode) {
     e.preventDefault();
     e.stopPropagation();
+
     setDragMode(mode);
-    setStartMouse({ x: e.clientX, y: e.clientY });
+    setActivePointerId(e.pointerId);
+    setStartPointer({ x: e.clientX, y: e.clientY });
     setStartPlacement(placement);
     setStartText(textLayer);
+
+    if (e.currentTarget instanceof Element && e.currentTarget.setPointerCapture) {
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      } catch {}
+    }
   }
 
   useEffect(() => {
-    function handleMove(e: MouseEvent) {
+    function handleMove(e: PointerEvent) {
       if (!dragMode || !containerRef.current) return;
+      if (activePointerId !== null && e.pointerId !== activePointerId) return;
 
       const rect = containerRef.current.getBoundingClientRect();
-      const dx = ((e.clientX - startMouse.x) / rect.width) * 100;
-      const dy = ((e.clientY - startMouse.y) / rect.height) * 100;
+      const dx = ((e.clientX - startPointer.x) / rect.width) * 100;
+      const dy = ((e.clientY - startPointer.y) / rect.height) * 100;
 
       if (dragMode === "design-drag") {
         onPlacementChange({
@@ -106,24 +116,29 @@ export default function MockupEditor({
       }
     }
 
-    function handleUp() {
+    function handleUp(e: PointerEvent) {
+      if (activePointerId !== null && e.pointerId !== activePointerId) return;
       setDragMode(null);
+      setActivePointerId(null);
     }
 
-    window.addEventListener("mousemove", handleMove);
-    window.addEventListener("mouseup", handleUp);
+    window.addEventListener("pointermove", handleMove);
+    window.addEventListener("pointerup", handleUp);
+    window.addEventListener("pointercancel", handleUp);
 
     return () => {
-      window.removeEventListener("mousemove", handleMove);
-      window.removeEventListener("mouseup", handleUp);
+      window.removeEventListener("pointermove", handleMove);
+      window.removeEventListener("pointerup", handleUp);
+      window.removeEventListener("pointercancel", handleUp);
     };
   }, [
     dragMode,
-    onPlacementChange,
-    onTextLayerChange,
-    startMouse,
+    activePointerId,
+    startPointer,
     startPlacement,
-    startText
+    startText,
+    onPlacementChange,
+    onTextLayerChange
   ]);
 
   return (
@@ -140,10 +155,10 @@ export default function MockupEditor({
             placement={placement}
             textLayer={textLayer}
             editable
-            onDesignMouseDown={(e) => beginDrag(e, "design-drag")}
-            onDesignResizeMouseDown={(e) => beginDrag(e, "design-resize")}
-            onTextMouseDown={(e) => beginDrag(e, "text-drag")}
-            onTextResizeMouseDown={(e) => beginDrag(e, "text-resize")}
+            onDesignPointerDown={(e) => beginDrag(e, "design-drag")}
+            onDesignResizePointerDown={(e) => beginDrag(e, "design-resize")}
+            onTextPointerDown={(e) => beginDrag(e, "text-drag")}
+            onTextResizePointerDown={(e) => beginDrag(e, "text-resize")}
           />
         </div>
 

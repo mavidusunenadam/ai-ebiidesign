@@ -342,6 +342,7 @@ textarea {
 .editor-surface {
   user-select: none;
   overflow: hidden;
+  touch-action: none;
 }
 
 .design-layer {
@@ -401,6 +402,7 @@ textarea {
   background: black;
   cursor: nwse-resize;
   z-index: 5;
+  touch-action: none;
 }
 
 .text-resize-handle {
