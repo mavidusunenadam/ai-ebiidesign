@@ -3,24 +3,28 @@ import { put } from "@vercel/blob";
 
 export const runtime = "nodejs";
 
-const BG_REMOVAL_API_URL = process.env.BG_REMOVAL_API_URL;
+const REMOVE_BG_API_KEY = process.env.REMOVE_BG_API_KEY;
 
-async function callBackgroundRemovalService(inputFile: File) {
-  if (!BG_REMOVAL_API_URL) {
-    throw new Error("BG_REMOVAL_API_URL tanımlı değil.");
+async function removeBackgroundWithRemoveBg(inputFile: File) {
+  if (!REMOVE_BG_API_KEY) {
+    throw new Error("REMOVE_BG_API_KEY tanımlı değil.");
   }
 
   const formData = new FormData();
-  formData.append("file", inputFile);
+  formData.append("image_file", inputFile);
+  formData.append("size", "auto");
 
-  const res = await fetch(BG_REMOVAL_API_URL, {
+  const res = await fetch("https://api.remove.bg/v1.0/removebg", {
     method: "POST",
+    headers: {
+      "X-Api-Key": REMOVE_BG_API_KEY
+    },
     body: formData
   });
 
   if (!res.ok) {
     const errorText = await res.text();
-    throw new Error(`Background removal service hatası: ${errorText}`);
+    throw new Error(`remove.bg hatası: ${errorText}`);
   }
 
   const arrayBuffer = await res.arrayBuffer();
@@ -76,7 +80,7 @@ export async function POST(req: Request) {
       });
     }
 
-    const url = await callBackgroundRemovalService(inputFile);
+    const url = await removeBackgroundWithRemoveBg(inputFile);
 
     return NextResponse.json({
       success: true,
