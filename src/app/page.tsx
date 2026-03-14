@@ -275,8 +275,8 @@ export default function HomePage() {
   const overlaySubtitle = cartCreating
     ? "Lütfen bekleyin, ürününüz sepete ekleniyor."
     : backgroundRemoving
-    ? "Görsel üzerindeki arka plan kaldırılıyor. Kaliteli bir arka plan kaldırma işlemi birazcık zaman alıyor"
-    : "Ürürünüz tasarlanıyor, lütfen birkaç saniye bekleyin. Bu işlem birazcık sürebilir";
+    ? "Görsel üzerindeki arka plan kaldırılıyor. Tahmini bekleme süreniz: 30sn"
+    : "Ürürünüz tasarlanıyor, lütfen birkaç saniye bekleyin. Tahmini bekleme süreniz: 30sn";
 
   return (
     <main className="container-app">

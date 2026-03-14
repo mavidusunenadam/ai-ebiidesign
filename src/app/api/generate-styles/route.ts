@@ -23,7 +23,7 @@ Important composition rules:
 - Maintain the original framing and camera distance as much as possible.
 - Do not zoom in.`,
   size: "auto",
-  quality: "high",
+  quality: "medium",
   output_format: "png"
 });
 

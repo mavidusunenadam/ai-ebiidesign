@@ -33,7 +33,7 @@ export async function POST(req: Request) {
         "Remove the background completely and keep only the main subject cleanly cut out. Preserve all subject details.",
       background: "transparent",
       output_format: "png",
-      quality: "high",
+      quality: "medium",
       size: "auto"
     });
 
