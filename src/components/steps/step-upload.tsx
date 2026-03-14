@@ -53,7 +53,7 @@ export default function StepUpload({
             disabled={loading}
             className="btn btn-primary"
           >
-            {loading ? "Tasarım Üretiliyor..." : "4 Tasarım Oluştur"}
+            {loading ? "Tasarım Üretiliyor..." : "Tasarım Oluştur"}
           </button>
         </div>
 

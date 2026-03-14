@@ -69,38 +69,50 @@ export default function HomePage() {
   const [step, setStep] = useState<StepKey>(1);
   const [file, setFile] = useState<File | null>(null);
   const [uploadedPreview, setUploadedPreview] = useState("");
+  const [originalImageUrl, setOriginalImageUrl] = useState("");
+  const [useOriginalImage, setUseOriginalImage] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [backgroundRemoving, setBackgroundRemoving] = useState(false);
   const [cartCreating, setCartCreating] = useState(false);
+
   const [error, setError] = useState("");
   const [designs, setDesigns] = useState<StyleResult[]>([]);
   const [selectedDesign, setSelectedDesign] = useState<StyleResult | null>(null);
-  const [bgRemovedUrl, setBgRemovedUrl] = useState<string>("");
+  const [bgRemovedUrl, setBgRemovedUrl] = useState("");
+
   const [product, setProduct] = useState<ProductSelection>(initialProduct);
   const [placement, setPlacement] = useState<DesignPlacement>(initialPlacement);
   const [textLayer, setTextLayer] = useState<TextLayer>(initialTextLayer);
 
-  const activeDesignUrl = bgRemovedUrl || selectedDesign?.url || null;
+  const activeDesignUrl =
+    bgRemovedUrl ||
+    (useOriginalImage ? originalImageUrl : selectedDesign?.url) ||
+    null;
 
   const canGoNext = useMemo(() => {
-    if (step === 1) return designs.length > 0;
-    if (step === 2) return !!selectedDesign;
+    if (step === 1) return designs.length > 0 || !!originalImageUrl;
+    if (step === 2) return !!selectedDesign || !!originalImageUrl;
     if (step === 3) return !!activeDesignUrl;
     if (step === 4) return !!activeDesignUrl && product.quantity > 0;
     return true;
-  }, [step, designs.length, selectedDesign, activeDesignUrl, product.quantity]);
+  }, [step, designs.length, selectedDesign, originalImageUrl, activeDesignUrl, product.quantity]);
 
   function handleFileChange(selected: File | null) {
     setFile(selected);
     setDesigns([]);
     setSelectedDesign(null);
     setBgRemovedUrl("");
+    setUseOriginalImage(false);
     setError("");
 
     if (selected) {
-      setUploadedPreview(URL.createObjectURL(selected));
+      const previewUrl = URL.createObjectURL(selected);
+      setUploadedPreview(previewUrl);
+      setOriginalImageUrl(previewUrl);
     } else {
       setUploadedPreview("");
+      setOriginalImageUrl("");
     }
   }
 
@@ -115,6 +127,7 @@ export default function HomePage() {
     setDesigns([]);
     setSelectedDesign(null);
     setBgRemovedUrl("");
+    setUseOriginalImage(false);
 
     try {
       const optimized = await compressImage(file);
@@ -140,12 +153,22 @@ export default function HomePage() {
       setProduct(initialProduct);
       setStep(2);
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Bilinmeyen hata.";
+      const message = err instanceof Error ? err.message : "Bilinmeyen hata.";
       setError(message);
     } finally {
       setLoading(false);
     }
+  }
+
+  function handleUseOriginalImage() {
+    if (!originalImageUrl) return;
+
+    setUseOriginalImage(true);
+    setSelectedDesign(null);
+    setBgRemovedUrl("");
+    setPlacement(initialPlacement);
+    setTextLayer(initialTextLayer);
+    setStep(3);
   }
 
   function handleNext() {
@@ -167,35 +190,49 @@ export default function HomePage() {
     }));
   }
 
-  async function handleRemoveBackground() {
-    if (!selectedDesign?.url) return;
+ async function handleRemoveBackground() {
+  try {
+    setBackgroundRemoving(true);
 
-    try {
-      setBackgroundRemoving(true);
+    let res: Response;
 
-      const res = await fetch("/api/remove-background", {
+    if (useOriginalImage && file) {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      res = await fetch("/api/remove-background", {
+        method: "POST",
+        body: formData
+      });
+    } else {
+      if (!activeDesignUrl) {
+        throw new Error("Arka plan kaldırılacak görsel bulunamadı.");
+      }
+
+      res = await fetch("/api/remove-background", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          imageUrl: selectedDesign.url
+          imageUrl: activeDesignUrl
         })
       });
-
-      const json = await res.json();
-
-      if (!res.ok || !json.success || !json.url) {
-        throw new Error(json.error || "Arka plan kaldırma başarısız.");
-      }
-
-      setBgRemovedUrl(json.url);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Arka plan kaldırma hatası.");
-    } finally {
-      setBackgroundRemoving(false);
     }
+
+    const json = await res.json();
+
+    if (!res.ok || !json.success || !json.url) {
+      throw new Error(json.error || "Arka plan kaldırma başarısız.");
+    }
+
+    setBgRemovedUrl(json.url);
+  } catch (err) {
+    alert(err instanceof Error ? err.message : "Arka plan kaldırma hatası.");
+  } finally {
+    setBackgroundRemoving(false);
   }
+}
 
   function handleUseOriginal() {
     setBgRemovedUrl("");
@@ -203,7 +240,7 @@ export default function HomePage() {
 
   async function handleAddToCart() {
     if (!activeDesignUrl) {
-      alert("Önce bir tasarım seçmelisiniz.");
+      alert("Önce bir tasarım seçmelisin.");
       return;
     }
 
@@ -251,7 +288,7 @@ export default function HomePage() {
       const cartJson = await cartRes.json();
 
       if (!cartRes.ok || !cartJson.success || !cartJson.checkoutUrl) {
-        throw new Error(cartJson.error || "Shopify sepet oluşturulamadı.");
+        throw new Error(cartJson.error || "Shopify sepet oluşturulamadı. Tekrar deneyiniz.");
       }
 
       window.location.href = cartJson.checkoutUrl;
@@ -259,7 +296,7 @@ export default function HomePage() {
       alert(
         error instanceof Error
           ? error.message
-          : "Sepete ekleme sırasında hata oluştu."
+          : "Sepete ekleme sırasında hata oluştu. Tekrar deneyiniz."
       );
     } finally {
       setCartCreating(false);
@@ -267,16 +304,18 @@ export default function HomePage() {
   }
 
   const overlayVisible = loading || backgroundRemoving || cartCreating;
+
   const overlayTitle = cartCreating
-    ? "Ürününüz Sepetinize ekleniyor..."
+    ? "Sepetiniz oluşturuluyor..."
     : backgroundRemoving
     ? "Arka plan kaldırılıyor..."
-    : "Tasarlanıyor...";
+    : "Oluşturuluyor...";
+
   const overlaySubtitle = cartCreating
     ? "Lütfen bekleyin, ürününüz sepete ekleniyor."
     : backgroundRemoving
-    ? "Görsel üzerindeki arka plan kaldırılıyor. Tahmini bekleme süreniz: 30sn"
-    : "Ürürünüz tasarlanıyor, lütfen birkaç saniye bekleyin. Tahmini bekleme süreniz: 30sn";
+    ? "Görsel şeffaf arka planla hazırlanıyor."
+    : "AI görseller hazırlanıyor, lütfen birkaç saniye bekleyin.";
 
   return (
     <main className="container-app">
@@ -295,7 +334,7 @@ export default function HomePage() {
             AI ile t-shirt’e dönüştür
           </h1>
           <p className="hero-text">
-            Çok adımlı akışla tasarımını oluştur, mockup üzerinde düzenle ve siparişe hazırla.
+            Kendi tasarımını oluştur, t-shirt üzerinde düzenle ve siparişini oluştur.
           </p>
         </div>
 
@@ -315,8 +354,11 @@ export default function HomePage() {
           <StepSelectDesign
             designs={designs}
             selectedDesign={selectedDesign}
+            originalImageUrl={originalImageUrl}
+            onUseOriginalImage={handleUseOriginalImage}
             onSelectDesign={(design) => {
               setSelectedDesign(design);
+              setUseOriginalImage(false);
               setBgRemovedUrl("");
             }}
           />

@@ -125,7 +125,7 @@ export default function Uploader() {
               disabled={loading}
               className="btn btn-primary"
             >
-              {loading ? "Üretiliyor..." : "4 Style Oluştur"}
+              {loading ? "Üretiliyor..." : "Tasarım Oluştur"}
             </button>
           </div>
 
